@@ -1,0 +1,53 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "projection": {"type": "mercator"},
+  "width": "container", 
+  "height": "container",
+  "data": {
+    "url": "./ne_10m_admin_1_states_provinces.json",
+    "format": {"type": "topojson", "feature": "ne_10m_admin_1_states_provinces"}
+  },
+  "transform": [
+    {
+      "lookup": "properties.postal",
+      "from": {
+        "data": {
+          "url": "./accidentperstate2.csv"
+        },
+        "key": "State",
+        "fields": ["count", "Population", "stateNames"]
+      }
+    },
+    {"calculate": "datum.Population * 1000 ", "as": "population"},
+    {
+      "calculate": "datum.count / datum.population * 100000",
+      "as": "Accidents Per 100,000 People"
+    }
+  ],
+  "layer": [
+    {"mark": {"type": "geoshape", "stroke": "white", "strokeWidth": 2}}
+  ],
+  "mark": {"type": "geoshape"},
+  "encoding": {
+    "color": {
+      "field": "Accidents Per 100,000 People",
+      "type": "quantitative",
+      "scale": {
+        "type": "linear",
+        "domain": [0, 5],
+        "range": ["#f7fbff", "#08306b"],
+        "interpolate": "hcl"
+      }
+    },
+    "tooltip": [
+      {"field": "stateNames", "type": "nominal", "title": "State/Territory:"},
+      {"field": "count", "type": "quantitative", "title": "Fatal Accidents: "},
+      {
+        "field": "population",
+        "type": "quantitative",
+        "title": "Population ('000): "
+      }
+    ]
+  },
+  "config": {}
+}
