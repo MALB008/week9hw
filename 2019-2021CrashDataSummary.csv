@@ -1,4 +1,4 @@
-Year,State,0_to_16,17_to_25,26_to_39,40_to_64,65_to_74,75_or_older,Total Accidents,Population,stateNames
+Year,State,0_to_16,17_to_25,26_to_39,40_to_64,65_to_74,75_or_older,Total,Population,stateNames
 2019,CT,0,0,1,3,1,1,6,427.4,Australian Capital Territory
 2019,NS,9,61,68,122,39,54,353,8129.0,New South Wales
 2019,NT,3,7,20,6,0,0,36,244.8,Northern Territory
