@@ -1,53 +1,165 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "projection": {"type": "mercator"},
-  "width": "container", 
-  "height": "container",
-  "data": {
-    "url": "./ne_10m_admin_1_states_provinces.json",
-    "format": {"type": "topojson", "feature": "ne_10m_admin_1_states_provinces"}
-  },
-  "transform": [
+  "width": 400,
+  "height": 400,
+  "params": [
     {
-      "lookup": "properties.postal",
-      "from": {
-        "data": {
-          "url": "./accidentperstate2.csv"
-        },
-        "key": "State",
-        "fields": ["count", "Population", "stateNames"]
+      "name": "Year_selection",
+      "value": 2019,
+      "bind": {
+        "input": "range",
+        "min": 2019,
+        "max": 2021,
+        "step": 1,
+        "name": "Year:  "
       }
     },
-    {"calculate": "datum.Population * 1000 ", "as": "population"},
     {
-      "calculate": "datum.count / datum.population * 100000",
-      "as": "Accidents Per 100,000 People"
+      "name": "State_selection",
+      "value": "Victoria",
+      "bind": {
+        "input": "select",
+        "options": [
+          "New South Wales",
+          "Australian Capital Territory",
+          "Northern Territory",
+          "Queensland",
+          "South Australia",
+          "Tasmania",
+          "Victoria",
+          "Western Australia"
+        ],
+        "name": "Select State: "
+      }
     }
   ],
-  "layer": [
-    {"mark": {"type": "geoshape", "stroke": "white", "strokeWidth": 2}}
-  ],
-  "mark": {"type": "geoshape"},
-  "encoding": {
-    "color": {
-      "field": "Accidents Per 100,000 People",
-      "type": "quantitative",
-      "scale": {
-        "type": "linear",
-        "domain": [0, 5],
-        "range": ["#f7fbff", "#08306b"],
-        "interpolate": "hcl"
-      }
+  "vconcat": [
+    {
+      "projection": {"type": "mercator"},
+      "data": {
+        "url": "https://raw.githubusercontent.com/MALB008/week9hw/refs/heads/main/ne_10m_admin_1_states_provinces.json",
+        "format": {
+          "type": "topojson",
+          "feature": "ne_10m_admin_1_states_provinces"
+        }
+      },
+      "transform": [
+        {
+          "calculate": "'Data is not available in ' + datum.properties.postal",
+          "as": "note"
+        }
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "geoshape",
+            "fill": "#ddd",
+            "stroke": "white",
+            "strokeWidth": 1
+          },
+          "encoding": {"tooltip": {"field": "note"}}
+        },
+        {
+          "data": {
+            "url": "https://raw.githubusercontent.com/MALB008/week9hw/refs/heads/main/2019-2021CrashDataSummary.csv"
+          },
+          "transform": [
+            {
+              "lookup": "stateNames",
+              "from": {
+                "data": {
+                  "url": "https://raw.githubusercontent.com/MALB008/week9hw/refs/heads/main/ne_10m_admin_1_states_provinces.json",
+                  "format": {
+                    "type": "topojson",
+                    "feature": "ne_10m_admin_1_states_provinces"
+                  }
+                },
+                "key": "properties.name"
+              },
+              "as": "geo"
+            },
+            {"calculate": "datum.Population * 1000 ", "as": "population"},
+            {
+              "calculate": "datum.Total / datum.population * 100000",
+              "as": "Accidents Per 100,000 People"
+            },
+            {"filter": "datum.Year == Year_selection"}
+          ],
+          "mark": {"type": "geoshape", "stroke": "black", "strokeWidth": 0.5},
+          "encoding": {
+            "shape": {"field": "geo", "type": "geojson"},
+            "color": {
+              "field": "Accidents Per 100,000 People",
+              "type": "quantitative",
+              "scale": {"domain": [1.8, 15], "range": ["#ffffb2", "#b30000"]},
+              "legend": {"format": ".2s"}
+            },
+            "tooltip": [
+              {
+                "field": "stateNames",
+                "type": "nominal",
+                "title": "State/Territory:"
+              },
+              {
+                "field": "Total",
+                "type": "quantitative",
+                "title": "Fatal Accidents: "
+              },
+              {
+                "field": "population",
+                "type": "quantitative",
+                "title": "Population ('000): "
+              },
+              {"field": "Year", "type": "quantitative", "title": "Year"},
+              {
+                "field": "geo.properties.postal",
+                "type": "nominal",
+                "title": "Postal Code (Debug)"
+              }
+            ]
+          }
+        }
+      ],
+      "config": {}
     },
-    "tooltip": [
-      {"field": "stateNames", "type": "nominal", "title": "State/Territory:"},
-      {"field": "count", "type": "quantitative", "title": "Fatal Accidents: "},
-      {
-        "field": "population",
-        "type": "quantitative",
-        "title": "Population ('000): "
-      }
-    ]
-  },
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/MALB008/week9hw/refs/heads/main/2019-2021CrashDataSummary.csv"
+      },
+      "transform": [
+        {"filter": "datum.stateNames == State_selection"},
+        {"filter": "datum.Year == Year_selection"},
+        {
+          "fold": [
+            "0_to_16",
+            "17_to_25",
+            "26_to_39",
+            "40_to_64",
+            "65_to_74",
+            "75_or_older"
+          ],
+          "as": ["age_group", "accidents"]
+        }
+      ],
+      "mark": "bar",
+      "encoding": {
+        "x": {
+          "field": "age_group",
+          "type": "nominal",
+          "axis": {"title": "Age Group"}
+        },
+        "y": {
+          "field": "accidents",
+          "type": "quantitative",
+          "axis": {"title": "Total Accidents"}
+        }
+      },
+      "title": {
+        "signal": "'Total Accidents in ' + State_selection + ' per Age Group (' + Year_selection + ')'"
+      },
+      "width": 250,
+      "height": 250
+    }
+  ],
   "config": {}
 }
